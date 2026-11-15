@@ -11,12 +11,12 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
+      - name: Momiji kaynağını indir
+        run: git clone --depth 1 --recurse-submodules https://github.com/yazanj082/momiji.git momiji
       - name: Araçlar
         run: |
           sudo apt-get update
@@ -25,14 +25,15 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
       - name: Yamayı uygula
         run: |
-          unzip -o 'oyunca2-*.zip' -d .
+          unzip -o 'oyunca2-*.zip' -d momiji
+          cd momiji
           python3 patch.py
       - name: Derle
-        working-directory: android
+        working-directory: momiji/android
         run: |
           chmod +x gradlew
           ./gradlew assembleFdroidDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: Oyunca-apk
-          path: android/app/build/outputs/apk/**/*.apk
+          path: momiji/android/app/build/outputs/apk/**/*.apk
