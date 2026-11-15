@@ -1,0 +1,38 @@
+name: Oyunca APK
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'oyunca2-*.zip'
+      - '.github/workflows/build.yml'
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Araçlar
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-protobuf protobuf-compiler
+          pip install --break-system-packages grpcio-tools protobuf || true
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      - name: Yamayı uygula
+        run: |
+          unzip -o 'oyunca2-*.zip' -d .
+          python3 patch.py
+      - name: Derle
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleFdroidDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Oyunca-apk
+          path: android/app/build/outputs/apk/**/*.apk
