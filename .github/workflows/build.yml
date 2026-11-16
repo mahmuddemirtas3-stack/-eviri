@@ -24,10 +24,23 @@ jobs:
           pip install --break-system-packages grpcio-tools protobuf || true
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
       - name: Yamayı uygula
+        env:
+          OYUNCA_GEMINI_KEY: ${{ secrets.OYUNCA_GEMINI_KEY }}
+          OYUNCA_DEEPL_KEY: ${{ secrets.OYUNCA_DEEPL_KEY }}
+          OYUNCA_CLAUDE_KEY: ${{ secrets.OYUNCA_CLAUDE_KEY }}
         run: |
           unzip -o 'oyunca2-*.zip' -d momiji
           cd momiji
           python3 patch.py
+      - name: İmza anahtarı
+        env:
+          KS_B64: ${{ secrets.OYUNCA_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.OYUNCA_KEYSTORE_PASS }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > momiji/android/oyunca.jks
+            printf 'chiakiKeystore=%s\nchiakiKeystorePW=%s\nchiakiKeyAlias=oyunca\nchiakiKeyPW=%s\n' "$PWD/momiji/android/oyunca.jks" "$KS_PASS" "$KS_PASS" > momiji/android/local.properties
+          fi
       - name: Derle
         working-directory: momiji/android
         run: |
